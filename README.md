@@ -51,3 +51,10 @@ The built `dist/` folder is static and works from any host or subfolder.
 - `src/data/classic.ts`: the default board and card decks
 - `src/screens/`: Setup, Game, Ledger, Properties, Trade, Fix, Admin
 - `src/storage.ts`: localStorage persistence and JSON import/export
+
+## Deployment
+
+`.github/workflows/deploy.yml` builds and tests every push and publishes the
+default branch to GitHub Pages. One-time setup in the repository:
+**Settings → Pages → Build and deployment → Source: GitHub Actions**.
+The app is then served at `https://<owner>.github.io/<repo>/`.
