@@ -74,7 +74,17 @@ The built `dist/` folder is static and works from any host or subfolder.
 
 ## Deployment
 
-`.github/workflows/deploy.yml` builds and tests every push and publishes the
-default branch to GitHub Pages. One-time setup in the repository:
-**Settings → Pages → Build and deployment → Source: GitHub Actions**.
-The app is then served at `https://<owner>.github.io/<repo>/`.
+The app is hosted on Cloudflare Pages (project `board-bank`):
+**https://board-bank.pages.dev**
+
+`.github/workflows/deploy.yml` builds and tests every push, then deploys it with
+Wrangler. The default branch publishes to production; any other branch gets a
+preview URL (`https://<branch>.board-bank.pages.dev`).
+
+One-time setup in the GitHub repository, under
+**Settings → Secrets and variables → Actions**, add:
+
+- `CLOUDFLARE_API_TOKEN`: an API token with the *Cloudflare Pages: Edit* permission
+- `CLOUDFLARE_ACCOUNT_ID`: your Cloudflare account ID
+
+To deploy by hand: `npm run build && npx wrangler pages deploy dist --project-name=board-bank`.
