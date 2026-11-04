@@ -159,3 +159,18 @@ export function Confirm({ text, onYes, onNo, yes = 'Confirm' }: { text: string; 
     </Sheet>
   );
 }
+
+/** Top-level switch between the full automatic banker and plain bank mode. */
+export function ModeSwitch({ mode }: { mode: 'game' | 'bank' }) {
+  const { go } = useApp();
+  return (
+    <div className="seg" role="group" aria-label="Mode">
+      <button aria-pressed={mode === 'game'} onClick={() => mode !== 'game' && go({ name: 'home' })}>
+        Full game
+      </button>
+      <button aria-pressed={mode === 'bank'} onClick={() => mode !== 'bank' && go({ name: 'bankSetup' })}>
+        Bank only
+      </button>
+    </div>
+  );
+}

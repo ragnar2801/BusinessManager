@@ -1,6 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AppProvider, useApp } from './app';
+import { BankProvider } from './bank/store';
+import { BankHistory, BankHome, BankSetup } from './screens/Bank';
 import { Admin } from './screens/Admin';
 import { Fix } from './screens/Fix';
 import { Game } from './screens/Game';
@@ -12,6 +14,9 @@ import './styles.css';
 
 function Router() {
   const { view, game } = useApp();
+  if (view.name === 'bank') return <BankHome />;
+  if (view.name === 'bankSetup') return <BankSetup />;
+  if (view.name === 'bankHistory') return <BankHistory />;
   // Game-only screens fall back to setup when there is no game.
   if (!game && view.name !== 'admin') return <Setup />;
   switch (view.name) {
@@ -35,7 +40,9 @@ function Router() {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AppProvider>
-      <Router />
+      <BankProvider>
+        <Router />
+      </BankProvider>
     </AppProvider>
   </StrictMode>,
 );

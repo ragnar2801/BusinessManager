@@ -246,3 +246,62 @@ select.input { padding: 0 8px; }
 .rel { position: relative; }
 
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Bank-only mode */
+.chip.lg { min-height: 44px; padding: 0 16px; font-size: 15px; font-weight: 600; }
+.color-dot { width: 34px; height: 34px; border-radius: 50%; border: none; flex-shrink: 0; }
+
+.hint { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 48px; padding: 0 6px 0 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); font-size: 15px; color: var(--muted); }
+.hint.on { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.hint.on .btn { background: transparent; color: inherit; border-color: currentColor; }
+
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.tile {
+  position: relative;
+  min-height: 116px;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-top: 6px solid var(--pc, var(--line));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  text-align: left;
+  transition: transform 0.08s, border-color 0.15s, background 0.15s;
+}
+.tile:active { transform: scale(0.98); }
+.tile-hit { position: absolute; inset: 0; border: none; background: transparent; border-radius: inherit; z-index: 1; }
+.tile-name { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile-amt { font-family: var(--display); font-size: clamp(24px, 7.5vw, 32px); font-weight: 700; letter-spacing: -0.01em; line-height: 1; }
+.tile-foot { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 32px; gap: 6px; }
+.tile-tag { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.go-btn { position: relative; z-index: 2; min-height: 32px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface-2); font-size: 13px; font-weight: 700; white-space: nowrap; margin-left: auto; }
+
+.tile.from { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+.tile.target { border-style: dashed; border-color: var(--accent); border-top-style: solid; }
+.tile.flash { animation: flash 0.9s ease-out; }
+@keyframes flash { 0% { background: color-mix(in srgb, var(--accent) 28%, var(--surface)); } 100% { background: var(--surface); } }
+@media (prefers-reduced-motion: reduce) { .tile.flash { animation: none; } .tile { transition: none; } }
+
+.tile.bank { width: 100%; min-height: 64px; flex-direction: row; align-items: center; border-top-width: 2px; background: var(--surface-2); border-color: var(--line-strong); }
+.tile.bank.from { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+.tile.bank.target { border-style: dashed; border-color: var(--accent); }
+.tile.bank .tile-name { font-size: 18px; font-family: var(--display); font-weight: 700; }
+.tile.bank .tile-tag { color: var(--muted); }
+.tile.bank.from .tile-tag, .tile.bank.target .tile-tag { color: var(--accent); }
+
+.last { padding: 10px 10px 10px 14px; }
+
+.who { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.who-chip { flex: 1 1 0; min-width: 0; text-align: center; padding: 10px 8px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.amount-display { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 6px 0; }
+.amount-display .btn { flex-shrink: 0; }
+
+.notes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.keypad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.note { min-height: 58px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); font-family: var(--display); font-size: 22px; font-weight: 700; }
+.note:active { background: var(--seg); }
+.note.clear { font-family: inherit; font-size: 15px; font-weight: 600; color: var(--muted); }

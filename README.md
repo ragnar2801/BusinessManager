@@ -19,6 +19,20 @@ explanation. No one has to be the banker.
 - **Debt and bankruptcy**: a player who can't pay must raise cash or declare
   bankruptcy; assets go to the creditor.
 
+## Bank-only mode
+
+Pick **Bank only** at the top of the setup screen when you want to play the
+board game yourselves and only need someone to look after the money.
+
+- Setup is all taps: names are optional, and starting cash and the "Pass GO" amount are chips.
+- To move money, **tap who pays, then tap who gets paid**. That covers player → player,
+  player → bank and bank → player. The bank has unlimited money.
+- Enter the amount by tapping notes (+1, +5, +10, +20, +50, +100, +500), by picking a
+  recent amount, or on the built-in keypad. The phone keyboard never opens.
+- Each player tile has a one-tap **GO +$200** button.
+- **Undo** the last payment from the main screen, or remove any payment from **History**.
+  Balances are worked out from the list of payments, so removing one fixes both balances.
+
 ## Admin
 
 Configure the board you own. Starts from a classic-style default board with
@@ -49,7 +63,8 @@ The built `dist/` folder is static and works from any host or subfolder.
 - `src/engine/game.ts`: game rules as pure functions (state in, new state out)
 - `src/engine/validate.ts`: board setup checks shown in Admin
 - `src/data/classic.ts`: the default board and card decks
-- `src/screens/`: Setup, Game, Ledger, Properties, Trade, Fix, Admin
+- `src/screens/`: Setup, Game, Ledger, Properties, Trade, Fix, Admin, Bank (bank-only mode)
+- `src/bank/`: bank-only mode: transfers engine and its storage
 - `src/storage.ts`: localStorage persistence and JSON import/export
 
 ## Deployment

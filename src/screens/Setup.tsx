@@ -3,7 +3,7 @@ import { useApp } from '../app';
 import { newGame, RuleError } from '../engine/game';
 import { money } from '../engine/util';
 import { validateBoard } from '../engine/validate';
-import { Icon, NumberField } from '../ui/kit';
+import { Icon, ModeSwitch, NumberField } from '../ui/kit';
 
 export const PLAYER_COLORS = ['#0E6E5C', '#1F4FD1', '#C2410C', '#7A3FC4', '#B91C1C', '#0E7490', '#A16207', '#BE185D'];
 
@@ -53,6 +53,8 @@ export function Setup() {
           Admin
         </button>
       </div>
+
+      <ModeSwitch mode="game" />
 
       {game && (
         <div className="card pad row">

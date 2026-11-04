@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { hasSavedBank } from './bank/store';
 import { RuleError } from './engine/game';
 import { HISTORY_LIMIT, loadBoards, loadGame, saveBoards, saveGame, type SavedGame } from './storage';
 import type { Board, GameState } from './types';
@@ -10,7 +11,35 @@ export type View =
   | { name: 'properties'; playerId?: string }
   | { name: 'trade' }
   | { name: 'fix' }
-  | { name: 'admin'; boardId?: string };
+  | { name: 'admin'; boardId?: string }
+  | { name: 'bank' }
+  | { name: 'bankSetup' }
+  | { name: 'bankHistory' };
+
+const MODE = 'boardbank.mode';
+
+function lastMode(): 'game' | 'bank' {
+  try {
+    return localStorage.getItem(MODE) === 'bank' ? 'bank' : 'game';
+  } catch {
+    return 'game';
+  }
+}
+
+function rememberMode(v: View) {
+  const mode = v.name.startsWith('bank') ? 'bank' : v.name === 'admin' ? null : 'game';
+  if (!mode) return;
+  try {
+    localStorage.setItem(MODE, mode);
+  } catch {
+    /* ignore */
+  }
+}
+
+function initialView(): View {
+  if (lastMode() === 'bank') return hasSavedBank() ? { name: 'bank' } : { name: 'bankSetup' };
+  return loadGame() ? { name: 'game' } : { name: 'home' };
+}
 
 interface AppCtx {
   view: View;
@@ -44,7 +73,7 @@ export function useGame(): GameState {
 export function AppProvider({ children }: { children: ReactNode }) {
   const [boards, setBoardsState] = useState<Board[]>(() => loadBoards());
   const [saved, setSaved] = useState<SavedGame | null>(() => loadGame());
-  const [view, setView] = useState<View>(() => (loadGame() ? { name: 'game' } : { name: 'home' }));
+  const [view, setView] = useState<View>(initialView);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const timer = useRef<number | undefined>(undefined);
 
@@ -94,6 +123,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       view,
       go: (v) => {
+        rememberMode(v);
         setView(v);
         window.scrollTo(0, 0);
       },
