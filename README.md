@@ -74,17 +74,12 @@ The built `dist/` folder is static and works from any host or subfolder.
 
 ## Deployment
 
-The app is hosted on Cloudflare Pages (project `board-bank`):
-**https://board-bank.pages.dev**
+Hosted on Cloudflare Pages (project `bank-manager`), connected to this GitHub repo:
+**https://bank-manager.pages.dev**
 
-`.github/workflows/deploy.yml` builds and tests every push, then deploys it with
-Wrangler. The default branch publishes to production; any other branch gets a
-preview URL (`https://<branch>.board-bank.pages.dev`).
+Cloudflare builds and deploys every push on its own, with no GitHub Actions or secrets:
 
-One-time setup in the GitHub repository, under
-**Settings → Secrets and variables → Actions**, add:
-
-- `CLOUDFLARE_API_TOKEN`: an API token with the *Cloudflare Pages: Edit* permission
-- `CLOUDFLARE_ACCOUNT_ID`: your Cloudflare account ID
-
-To deploy by hand: `npm run build && npx wrangler pages deploy dist --project-name=board-bank`.
+- `main` deploys to production.
+- Every other branch gets a preview at `https://<branch>.bank-manager.pages.dev`.
+- Build command: `npm test && npm run build`. Output: `dist`. Node: `NODE_VERSION=22`.
+  A push whose tests fail is not deployed.
