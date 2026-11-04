@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { BankSession } from './engine';
 
 const KEY = 'boardbank.bankmode.v1';
@@ -34,23 +34,30 @@ interface BankCtx {
 const Ctx = createContext<BankCtx | null>(null);
 
 export function BankProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<BankSession | null>(load);
+  const [session, setSessionState] = useState<BankSession | null>(load);
+  // A ref keeps the newest session so two quick taps in a row both land,
+  // even before React re-renders between them.
+  const latest = useRef(session);
+  const setSession = useCallback((s: BankSession | null) => {
+    latest.current = s;
+    setSessionState(s);
+  }, []);
   useEffect(() => save(session), [session]);
 
   const apply = useCallback(
     (fn: (s: BankSession) => BankSession) => {
-      if (!session) return 'No bank session.';
+      if (!latest.current) return 'No bank session.';
       try {
-        setSession(fn(session));
+        setSession(fn(latest.current));
         return null;
       } catch (e) {
         return e instanceof Error ? e.message : 'Something went wrong.';
       }
     },
-    [session],
+    [setSession],
   );
 
-  const value = useMemo<BankCtx>(() => ({ session, apply, start: setSession, end: () => setSession(null) }), [session, apply]);
+  const value = useMemo<BankCtx>(() => ({ session, apply, start: setSession, end: () => setSession(null) }), [session, apply, setSession]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

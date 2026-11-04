@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useApp } from '../app';
-import { accountName, BANK, balances, newSession, recentAmounts, removeTransfer, transfer, type BankSession } from '../bank/engine';
+import { accountName, BANK, balances, effect, EVERYONE, fanOut, newSession, recentAmounts, removeTransfer, transfer, type BankSession, type Transfer } from '../bank/engine';
 import { useBank } from '../bank/store';
 import { money } from '../engine/util';
 import { BackBar, Confirm, Icon, ModeSwitch, Sheet } from '../ui/kit';
@@ -169,16 +169,16 @@ function BankBoard({ session }: { session: BankSession }) {
   const [to, setTo] = useState<string | null>(null);
   const [menu, setMenu] = useState(false);
   const [ending, setEnding] = useState(false);
-  const [flash, setFlash] = useState<string | null>(null);
+  // What the last payment did to each tile, shown as a floating +/− for a moment.
+  const [deltas, setDeltas] = useState<{ key: number; map: Record<string, number> } | null>(null);
   const bal = balances(session);
   const last = session.transfers[session.transfers.length - 1];
 
-  // Briefly highlight the tiles whose balance just changed.
   useEffect(() => {
-    if (!flash) return;
-    const t = window.setTimeout(() => setFlash(null), 900);
+    if (!deltas) return;
+    const t = window.setTimeout(() => setDeltas(null), 1600);
     return () => window.clearTimeout(t);
-  }, [flash]);
+  }, [deltas]);
 
   const tap = (id: string) => {
     if (!from) setFrom(id);
@@ -191,11 +191,32 @@ function BankBoard({ session }: { session: BankSession }) {
     if (err) return toast(err);
     setFrom(null);
     setTo(null);
-    setFlash(`${a}|${b}`);
+    setDeltas({ key: Date.now(), map: effect(session, { from: a, to: b, amount }) });
   };
 
-  const flashed = (id: string) => !!flash && flash.split('|').includes(id);
   const role = (id: string) => (from === id ? 'from' : from ? 'target' : '');
+  const tag = (id: string, idle: string) => (from === id ? 'Paying' : from ? 'Gets paid' : idle);
+  const delta = (id: string) => {
+    const n = deltas?.map[id];
+    return n ? (
+      <span key={deltas!.key} className={`delta ${n > 0 ? 'gain' : 'loss'}`} aria-hidden="true">
+        {n > 0 ? '+' : '−'}
+        {money(Math.abs(n))}
+      </span>
+    ) : null;
+  };
+  const special = (id: string, label: string, icon: ReactNode, idle: string) => (
+    <button
+      className={`tile special ${role(id)}`}
+      onClick={() => tap(id)}
+      aria-label={`${label}: ${from === id ? 'selected as payer, tap to cancel' : from ? 'gets paid' : 'pays'}`}
+    >
+      <span className="tile-name">
+        {icon} {label}
+      </span>
+      <span className="tile-tag">{tag(id, idle)}</span>
+    </button>
+  );
 
   return (
     <div className="screen">
@@ -235,18 +256,17 @@ function BankBoard({ session }: { session: BankSession }) {
         )}
       </div>
 
-      <button className={`tile bank ${role(BANK)} ${flashed(BANK) ? 'flash' : ''}`} onClick={() => tap(BANK)} aria-label={from ? (from === BANK ? 'Bank, selected as payer. Tap to cancel' : 'Bank gets paid') : 'Bank pays'}>
-        <span className="tile-name">
-          <BankIcon /> Bank
-        </span>
-        <span className="tile-tag">{from === BANK ? 'Paying' : from ? 'Gets paid' : 'Unlimited'}</span>
-      </button>
+      <div className="specials">
+        {special(BANK, 'Bank', <BankIcon />, 'Unlimited')}
+        {special(EVERYONE, 'Everyone', <EveryoneIcon />, 'Each player')}
+      </div>
 
       <div className="tiles">
         {session.players.map((p) => {
           const r = role(p.id);
           return (
-            <div key={p.id} className={`tile ${r} ${flashed(p.id) ? 'flash' : ''}`} style={{ ['--pc' as string]: p.color }}>
+            <div key={p.id} className={`tile ${r}`} style={{ ['--pc' as string]: p.color }}>
+              {delta(p.id)}
               <button
                 className="tile-hit"
                 onClick={() => tap(p.id)}
@@ -277,7 +297,7 @@ function BankBoard({ session }: { session: BankSession }) {
           <div className="grow">
             <div className="small muted">Last payment</div>
             <div style={{ fontWeight: 600 }}>
-              {accountName(session, last.from)} → {accountName(session, last.to)} <span className="display">{money(last.amount)}</span>
+              {describe(session, last)}
             </div>
           </div>
           <button className="btn" onClick={() => apply((s) => removeTransfer(s, last.id))}>
@@ -315,6 +335,25 @@ function BankBoard({ session }: { session: BankSession }) {
   );
 }
 
+function describe(s: BankSession, t: Pick<Transfer, 'from' | 'to' | 'amount'>) {
+  const each = fanOut(s, t.from, t.to) > 1;
+  return (
+    <>
+      {accountName(s, t.from)} → {accountName(s, t.to)} <span className="display">{money(t.amount)}</span>
+      {each && ' each'}
+    </>
+  );
+}
+
+function EveryoneIcon() {
+  return (
+    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5a3 3 0 010 6M21 20c0-2.6-1.7-4.9-4-5.7" />
+    </svg>
+  );
+}
+
 function BankIcon() {
   return (
     <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -328,6 +367,7 @@ function BankIcon() {
 /* ------------------------------------------------------------------ */
 
 const NOTES = [1, 5, 10, 20, 50, 100, 500];
+const INPUT_KEY = 'boardbank.bank.input';
 
 function AmountSheet({
   session,
@@ -344,7 +384,21 @@ function AmountSheet({
   onSwap: () => void;
   onClose: () => void;
 }) {
-  const [mode, setMode] = useState<'notes' | 'keypad'>('notes');
+  const [mode, setModeState] = useState<'notes' | 'keypad'>(() => {
+    try {
+      return localStorage.getItem(INPUT_KEY) === 'keypad' ? 'keypad' : 'notes';
+    } catch {
+      return 'notes';
+    }
+  });
+  const setMode = (m: 'notes' | 'keypad') => {
+    setModeState(m);
+    try {
+      localStorage.setItem(INPUT_KEY, m);
+    } catch {
+      /* ignore */
+    }
+  };
   // Notes mode keeps each tap so ⌫ removes the last note added.
   const [taps, setTaps] = useState<number[]>([]);
   const [digits, setDigits] = useState('');
@@ -364,24 +418,33 @@ function AmountSheet({
 
   const presets = [...(from === BANK && session.salary ? [session.salary] : []), ...recentAmounts(session)].filter((v, i, a) => a.indexOf(v) === i).slice(0, 4);
   const bal = balances(session);
-  const short = from !== BANK && amount > bal[from];
+  const fan = fanOut(session, from, to);
+  // Anyone this payment would push below zero.
+  const short = amount
+    ? Object.entries(effect(session, { from, to, amount }))
+        .filter(([id, n]) => n < 0 && bal[id] + n < 0)
+        .map(([id]) => accountName(session, id))
+    : [];
   const fromName = accountName(session, from);
   const toName = accountName(session, to);
+  const each = fan > 1 ? ' each' : '';
 
   return (
-    <Sheet title="How much?" onClose={onClose}>
-      <div className="who">
-        <span className="who-chip">{fromName}</span>
-        <button className="btn icon sm-icon" aria-label="Swap who pays and who gets paid" onClick={onSwap}>
-          <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <Sheet title={`${fromName} → ${toName}`} onClose={onClose}>
+      <div className="amount-display" aria-live="polite">
+        <button className="btn icon" aria-label="Swap who pays and who gets paid" onClick={onSwap}>
+          <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M7 7h13l-4-4M17 17H4l4 4" />
           </svg>
         </button>
-        <span className="who-chip">{toName}</span>
-      </div>
-
-      <div className="amount-display" aria-live="polite">
-        <span className={`big-cash ${amount ? '' : 'muted'}`}>{money(amount)}</span>
+        <span className="grow center">
+          <span className={`big-cash ${amount ? '' : 'muted'}`}>{money(amount)}</span>
+          {fan > 1 && (
+            <span className="each small muted">
+              each · {fan} payments{amount ? ` · ${money(amount * fan)} total` : ''}
+            </span>
+          )}
+        </span>
         <button className="btn icon" aria-label="Remove last" disabled={!amount} onClick={back}>
           <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M21 5H9l-7 7 7 7h12V5zM17 9l-6 6M11 9l6 6" />
@@ -429,17 +492,15 @@ function AmountSheet({
         </div>
       )}
 
-      {short && (
+      {short.length > 0 && (
         <div className="warn">
           <Icon name="warn" size={18} />
-          <div>
-            {fromName} only has {money(bal[from])}. They’ll be at {money(bal[from] - amount)}.
-          </div>
+          <div>{short.join(', ')} will go below $0. You can still pay and sort it out later.</div>
         </div>
       )}
 
       <button className="btn primary big" disabled={!amount} onClick={() => onPay(amount)}>
-        {amount ? `${fromName} pays ${toName} ${money(amount)}` : 'Pick an amount'}
+        {amount ? `Pay ${money(amount)}${each}` : 'Pick an amount'}
       </button>
     </Sheet>
   );
@@ -456,7 +517,9 @@ export function BankHistory() {
   const [removing, setRemoving] = useState<string | null>(null);
   if (!session) return <BankSetup />;
 
-  const rows = [...session.transfers].reverse().filter((t) => !who || t.from === who || t.to === who);
+  const rows = [...session.transfers]
+    .reverse()
+    .filter((t) => !who || t.from === who || t.to === who || (who !== BANK && effect(session, t)[who] !== undefined));
   const time = (at: number) => new Date(at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
   return (
@@ -478,18 +541,22 @@ export function BankHistory() {
       </div>
       <div className="list">
         {rows.map((t) => {
-          const sign = who ? (t.to === who ? 1 : -1) : 0;
+          // Filtered to a player: show what this payment did to them.
+          const mine = who && who !== BANK ? (effect(session, t)[who] ?? 0) : null;
+          const each = fanOut(session, t.from, t.to) > 1;
           return (
             <div key={t.id} className="item">
               <div className="grow">
                 <div className="t">
                   {accountName(session, t.from)} → {accountName(session, t.to)}
                 </div>
-                <div className="s">{time(t.at)}</div>
+                <div className="s">
+                  {time(t.at)}
+                  {each && ` · ${money(t.amount)} each`}
+                </div>
               </div>
-              <div className={`display ${sign > 0 ? 'gain' : sign < 0 ? 'loss' : ''}`} style={{ fontSize: 17, whiteSpace: 'nowrap' }}>
-                {sign > 0 ? '+' : sign < 0 ? '−' : ''}
-                {money(t.amount)}
+              <div className={`display ${mine ? (mine > 0 ? 'gain' : 'loss') : ''}`} style={{ fontSize: 17, whiteSpace: 'nowrap' }}>
+                {mine ? (mine > 0 ? '+' : '−') + money(Math.abs(mine)) : money(t.amount) + (each ? ' ea' : '')}
               </div>
               <button className="btn sm" onClick={() => setRemoving(t.id)} aria-label="Remove this payment">
                 Remove

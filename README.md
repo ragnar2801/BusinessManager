@@ -27,8 +27,13 @@ board game yourselves and only need someone to look after the money.
 - Setup is all taps: names are optional, and starting cash and the "Pass GO" amount are chips.
 - To move money, **tap who pays, then tap who gets paid**. That covers player → player,
   player → bank and bank → player. The bank has unlimited money.
+- **Everyone** is a tile too: "Everyone → Ana" collects from each other player,
+  "Ana → Everyone" pays each other player, and "Bank → Everyone" pays every player.
+  Each of these is one payment, so one undo reverses it.
+- After each payment the tiles show what changed (+$250 / −$250) for a moment.
 - Enter the amount by tapping notes (+1, +5, +10, +20, +50, +100, +500), by picking a
-  recent amount, or on the built-in keypad. The phone keyboard never opens.
+  recent amount, or on the built-in keypad (the app remembers which you prefer).
+  The phone keyboard never opens.
 - Each player tile has a one-tap **GO +$200** button.
 - **Undo** the last payment from the main screen, or remove any payment from **History**.
   Balances are worked out from the list of payments, so removing one fixes both balances.
