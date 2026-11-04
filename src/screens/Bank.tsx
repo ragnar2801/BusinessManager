@@ -265,7 +265,7 @@ function BankBoard({ session }: { session: BankSession }) {
         {session.players.map((p) => {
           const r = role(p.id);
           return (
-            <div key={p.id} className={`tile ${r}`} style={{ ['--pc' as string]: p.color }}>
+            <div key={p.id} className={`tile ${r}`}>
               {delta(p.id)}
               <button
                 className="tile-hit"
